@@ -4,12 +4,13 @@
 
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 
-// esm.sh is used to compile stripe-node to be compatible with ES modules.
-import Stripe from "https://esm.sh/stripe@11.2.0?target=deno&no-check";
+// Import via bare specifier thanks to the import_map.json file.
+import Stripe from "stripe";
 
-const stripe = Stripe(Deno.env.get("STRIPE_API_KEY"), {
+const stripe = new Stripe(Deno.env.get("STRIPE_API_KEY") as string, {
   // This is needed to use the Fetch API rather than relying on the Node http
   // package.
+  apiVersion: "2022-11-15",
   httpClient: Stripe.createFetchHttpClient(),
 });
 // This is needed in order to use the Web Crypto API in Deno.
@@ -27,8 +28,8 @@ serve(async (request) => {
   try {
     receivedEvent = await stripe.webhooks.constructEventAsync(
       body,
-      signature,
-      Deno.env.get("STRIPE_WEBHOOK_SIGNING_SECRET"),
+      signature!,
+      Deno.env.get("STRIPE_WEBHOOK_SIGNING_SECRET")!,
       undefined,
       cryptoProvider
     );
