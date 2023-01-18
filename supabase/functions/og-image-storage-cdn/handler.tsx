@@ -1,6 +1,6 @@
-import React from "https://esm.sh/react@18.2.0";
-import { ImageResponse } from "https://deno.land/x/og_edge@0.0.4/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import React from "react";
+import { ImageResponse } from "og_edge";
+import { createClient } from "@supabase/supabase-js";
 
 const STORAGE_URL =
   "https://bljghubhkofddfrezkhn.supabase.co/storage/v1/object/public/images/edgy-images/";

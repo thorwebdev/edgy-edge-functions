@@ -1,5 +1,5 @@
-import React from "https://esm.sh/react@18.2.0";
-import { ImageResponse } from "https://deno.land/x/og_edge@0.0.4/mod.ts";
+import React from "react";
+import { ImageResponse } from "og_edge";
 
 export default function handler(req: Request) {
   return new ImageResponse(

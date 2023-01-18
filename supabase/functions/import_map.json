@@ -1,5 +1,11 @@
 {
   "imports": {
-    "stripe": "https://esm.sh/stripe@11.1.0?target=deno"
+    "og_edge": "https://deno.land/x/og_edge@0.0.4/mod.ts",
+    "grammy": "https://deno.land/x/grammy@v1.8.3/mod.ts",
+    "react": "https://esm.sh/react@18.2.0",
+    "std/server": "https://deno.land/std@0.131.0/http/server.ts",
+    "stripe": "https://esm.sh/stripe@11.1.0?target=deno",
+    "sift": "https://deno.land/x/sift@0.6.0/mod.ts",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.4.0"
   }
 }

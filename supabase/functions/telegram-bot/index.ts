@@ -2,11 +2,11 @@
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
 
-import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
+import { serve } from "std/server";
 
 console.log(`Function "telegram-bot" up and running!`);
 
-import { Bot, webhookCallback } from "https://deno.land/x/grammy@v1.8.3/mod.ts";
+import { Bot, webhookCallback } from "grammy";
 
 const bot = new Bot(Deno.env.get("BOT_TOKEN") || "");
 
