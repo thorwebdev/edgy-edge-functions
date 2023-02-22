@@ -21,7 +21,7 @@ serve(async (_req) => {
       // Encode the result as pretty printed JSON
       const body = JSON.stringify(
         animals,
-        (key, value) => (typeof value === "bigint" ? value.toString() : value),
+        (_key, value) => (typeof value === "bigint" ? value.toString() : value),
         2
       );
 
