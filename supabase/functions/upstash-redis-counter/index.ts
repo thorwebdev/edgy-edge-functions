@@ -1,5 +1,5 @@
 import { serve } from "std/server";
-import { Redis } from "Redis";
+import { Redis } from "@upstash/redis";
 console.log(`Function "upstash-redis-counter" up and running!`);
 serve(async (_req) => {
   try {
