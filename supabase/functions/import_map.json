@@ -9,7 +9,8 @@
     "sift": "https://deno.land/x/sift@0.6.0/mod.ts",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.4.0",
     "postgres": "https://deno.land/x/postgres@v0.14.2/mod.ts",
-    "Redis": "https://deno.land/x/upstash_redis@v1.19.3/mod.ts",
+    "@upstash/redis": "https://deno.land/x/upstash_redis@v1.19.3/mod.ts",
+    "@upstash/ratelimit": "https://cdn.skypack.dev/@upstash/ratelimit@latest",
     "puppeteer": "https://deno.land/x/puppeteer@16.2.0/mod.ts"
   }
 }
