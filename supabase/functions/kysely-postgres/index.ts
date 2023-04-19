@@ -1,0 +1,76 @@
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
+
+import { serve } from "https://deno.land/std@0.175.0/http/server.ts";
+import { Pool } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
+import { Kysely, Generated } from "https://esm.sh/kysely@0.23.4";
+// TODO: update once published to deno.land registry
+// https://github.com/barthuijgen/kysely-deno-postgres/pull/2
+import { PostgresDialect } from "./DenoPostgresDialect/mod.ts";
+
+console.log(`Function "kysely-postgres" up and running!`);
+
+interface AnimalTable {
+  id: Generated<bigint>;
+  animal: string;
+  created_at: Date;
+}
+
+// Keys of this interface are table names.
+interface Database {
+  animals: AnimalTable;
+}
+
+// Create a database pool with three connections that are lazily established.
+const pool = new Pool(
+  {
+    tls: { caCertificates: [Deno.env.get("DB_SSL_CERT")!] },
+    database: "postgres",
+    hostname: "db.bljghubhkofddfrezkhn.supabase.co",
+    user: "postgres",
+    port: 5432,
+    password: Deno.env.get("DB_PASSWORD"),
+  },
+  3,
+  true
+);
+
+// You'd create one of these when you start your app.
+const db = new Kysely<Database>({
+  // Use MysqlDialect for MySQL and SqliteDialect for SQLite.
+  dialect: new PostgresDialect({ pool }),
+});
+
+serve(async (_req) => {
+  try {
+    // Run a query
+    const animals = await db
+      .selectFrom("animals")
+      .select(["id", "animal", "created_at"])
+      .execute();
+
+    // Neat, it's properly typed \o/
+    console.log(animals[0].created_at.getFullYear());
+
+    // Encode the result as pretty printed JSON
+    const body = JSON.stringify(
+      animals,
+      (key, value) => (typeof value === "bigint" ? value.toString() : value),
+      2
+    );
+
+    // Return the response with the correct content type header
+    return new Response(body, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response(String(err?.message ?? err), { status: 500 });
+  }
+});
+
+// To invoke: navigate to http://localhost:54321/functions/v1/kysely-postgres
