@@ -22,7 +22,7 @@ interface Database {
   animals: AnimalTable;
 }
 
-// Create a database pool with three connections that are lazily established.
+// Create a database pool with one connection.
 const pool = new Pool(
   {
     tls: { caCertificates: [Deno.env.get("DB_SSL_CERT")!] },
@@ -32,8 +32,7 @@ const pool = new Pool(
     port: 5432,
     password: Deno.env.get("DB_PASSWORD"),
   },
-  3,
-  true
+  1
 );
 
 // You'd create one of these when you start your app.
