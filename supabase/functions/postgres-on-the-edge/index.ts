@@ -1,11 +1,24 @@
-import * as postgres from "postgres";
-import { serve } from "std/server";
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
 
-// Get the connection string from the environment variable "DATABASE_URL"
-const databaseUrl = Deno.env.get("DATABASE_URL")!;
+import { Pool } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
+import { serve } from "https://deno.land/std@0.114.0/http/server.ts";
 
-// Create a database pool with three connections that are lazily established
-const pool = new postgres.Pool(databaseUrl, 3, true);
+console.log(`Function "postgres-on-the-edge" up and running!`);
+
+// Create a database pool with one connection.
+const pool = new Pool(
+  {
+    tls: { caCertificates: [Deno.env.get("DB_SSL_CERT")!] },
+    database: "postgres",
+    hostname: "db.bljghubhkofddfrezkhn.supabase.co",
+    user: "postgres",
+    port: 5432,
+    password: Deno.env.get("DB_PASSWORD"),
+  },
+  1
+);
 
 serve(async (_req) => {
   try {
@@ -16,12 +29,11 @@ serve(async (_req) => {
       // Run a query
       const result = await connection.queryObject`SELECT * FROM animals`;
       const animals = result.rows; // [{ id: 1, name: "Lion" }, ...]
-      console.log(animals);
 
       // Encode the result as pretty printed JSON
       const body = JSON.stringify(
         animals,
-        (_key, value) => (typeof value === "bigint" ? value.toString() : value),
+        (key, value) => (typeof value === "bigint" ? value.toString() : value),
         2
       );
 
