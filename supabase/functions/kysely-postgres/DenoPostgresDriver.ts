@@ -1,31 +1,39 @@
-import { Pool } from "../deps/postgres.ts";
-import type { PoolClient } from "../deps/postgres.ts";
-import { PostgresDialectConfig } from "./postgres-dialect-config.ts";
-import { CompiledQuery, PostgresCursorConstructor } from "../deps/kysely.ts";
-import type {
+import {
+  CompiledQuery,
   DatabaseConnection,
-  QueryResult,
   Driver,
+  PostgresCursorConstructor,
+  QueryResult,
   TransactionSettings,
-} from "../deps/kysely.ts";
-import { extendStackTrace } from "../deps/kysely.ts";
+} from "https://esm.sh/kysely@0.23.4";
+import {
+  freeze,
+  isFunction,
+} from "https://esm.sh/kysely@0.23.4/dist/esm/util/object-utils.js";
+import { extendStackTrace } from "https://esm.sh/kysely@0.23.4/dist/esm/util/stack-trace-utils.js";
+import { Pool, PoolClient } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
+
+export interface PostgresDialectConfig {
+  pool: Pool | (() => Promise<Pool>);
+  cursor?: PostgresCursorConstructor;
+  onCreateConnection?: (connection: DatabaseConnection) => Promise<void>;
+}
 
 const PRIVATE_RELEASE_METHOD = Symbol();
 
 export class PostgresDriver implements Driver {
   readonly #config: PostgresDialectConfig;
   readonly #connections = new WeakMap<PoolClient, DatabaseConnection>();
-  #pool: Pool | null = null;
+  #pool?: Pool;
 
   constructor(config: PostgresDialectConfig) {
-    this.#config = config;
+    this.#config = freeze({ ...config });
   }
 
   async init(): Promise<void> {
-    this.#pool =
-      typeof this.#config.pool === "function"
-        ? await this.#config.pool()
-        : this.#config.pool;
+    this.#pool = isFunction(this.#config.pool)
+      ? await this.#config.pool()
+      : this.#config.pool;
   }
 
   async acquireConnection(): Promise<DatabaseConnection> {
@@ -33,15 +41,17 @@ export class PostgresDriver implements Driver {
     let connection = this.#connections.get(client);
 
     if (!connection) {
-      connection = new PostgresConnection(client, { cursor: null });
+      connection = new PostgresConnection(client, {
+        cursor: this.#config.cursor ?? null,
+      });
       this.#connections.set(client, connection);
 
       // The driver must take care of calling `onCreateConnection` when a new
       // connection is created. The `pg` module doesn't provide an async hook
       // for the connection creation. We need to call the method explicitly.
-      // if (this.#config.onCreateConnection) {
-      //   await this.#config.onCreateConnection(connection);
-      // }
+      if (this.#config?.onCreateConnection) {
+        await this.#config.onCreateConnection(connection);
+      }
     }
 
     return connection;
@@ -70,16 +80,14 @@ export class PostgresDriver implements Driver {
     await connection.executeQuery(CompiledQuery.raw("rollback"));
   }
 
-  // deno-lint-ignore require-await
-  async releaseConnection(connection: DatabaseConnection): Promise<void> {
-    const pgConnection = connection as PostgresConnection;
-    pgConnection[PRIVATE_RELEASE_METHOD]();
+  async releaseConnection(connection: PostgresConnection): Promise<void> {
+    connection[PRIVATE_RELEASE_METHOD]();
   }
 
   async destroy(): Promise<void> {
     if (this.#pool) {
       const pool = this.#pool;
-      this.#pool = null;
+      this.#pool = undefined;
       await pool.end();
     }
   }
@@ -104,11 +112,19 @@ class PostgresConnection implements DatabaseConnection {
         ...compiledQuery.parameters,
       ]);
 
-      if (result.command === "UPDATE" || result.command === "DELETE") {
+      if (
+        result.command === "INSERT" ||
+        result.command === "UPDATE" ||
+        result.command === "DELETE"
+      ) {
+        const numAffectedRows = BigInt(result.rowCount || 0);
+
         return {
-          numUpdatedOrDeletedRows: BigInt(result.rowCount!),
+          // TODO: remove.
+          numUpdatedOrDeletedRows: numAffectedRows,
+          numAffectedRows,
           rows: result.rows ?? [],
-        };
+        } as any;
       }
 
       return {
@@ -121,7 +137,7 @@ class PostgresConnection implements DatabaseConnection {
 
   async *streamQuery<O>(
     _compiledQuery: CompiledQuery,
-    _chunkSize: number
+    chunkSize: number
   ): AsyncIterableIterator<QueryResult<O>> {
     if (!this.#options.cursor) {
       throw new Error(
@@ -129,7 +145,12 @@ class PostgresConnection implements DatabaseConnection {
       );
     }
 
-    // Deno postgress does not support streaming
+    if (!Number.isInteger(chunkSize) || chunkSize <= 0) {
+      throw new Error("chunkSize must be a positive integer");
+    }
+
+    // stream not available
+    return null;
   }
 
   [PRIVATE_RELEASE_METHOD](): void {

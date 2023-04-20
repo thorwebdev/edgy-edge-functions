@@ -4,10 +4,16 @@
 
 import { serve } from "https://deno.land/std@0.175.0/http/server.ts";
 import { Pool } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
-import { Kysely, Generated } from "https://esm.sh/kysely@0.23.4";
+import {
+  Kysely,
+  Generated,
+  PostgresAdapter,
+  PostgresIntrospector,
+  PostgresQueryCompiler,
+} from "https://esm.sh/kysely@0.23.4";
 // TODO: update once published to deno.land registry
 // https://github.com/barthuijgen/kysely-deno-postgres/pull/2
-import { PostgresDialect } from "./DenoPostgresDialect/mod.ts";
+import { PostgresDriver } from "./DenoPostgresDriver.ts";
 
 console.log(`Function "kysely-postgres" up and running!`);
 
@@ -37,8 +43,22 @@ const pool = new Pool(
 
 // You'd create one of these when you start your app.
 const db = new Kysely<Database>({
-  // Use MysqlDialect for MySQL and SqliteDialect for SQLite.
-  dialect: new PostgresDialect({ pool }),
+  dialect: {
+    createAdapter() {
+      return new PostgresAdapter();
+    },
+    createDriver() {
+      // You need a driver to be able to execute queries. In this example
+      // we use the dummy driver that never does anything.
+      return new PostgresDriver({ pool });
+    },
+    createIntrospector(db: Kysely<unknown>) {
+      return new PostgresIntrospector(db);
+    },
+    createQueryCompiler() {
+      return new PostgresQueryCompiler();
+    },
+  },
 });
 
 serve(async (_req) => {
