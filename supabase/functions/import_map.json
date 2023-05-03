@@ -11,6 +11,7 @@
     "postgres": "https://deno.land/x/postgres@v0.14.2/mod.ts",
     "@upstash/redis": "https://deno.land/x/upstash_redis@v1.19.3/mod.ts",
     "@upstash/ratelimit": "https://cdn.skypack.dev/@upstash/ratelimit@latest",
-    "puppeteer": "https://deno.land/x/puppeteer@16.2.0/mod.ts"
+    "puppeteer": "https://deno.land/x/puppeteer@16.2.0/mod.ts",
+    "@huggingface/inference": "https://esm.sh/@huggingface/inference@2.2.0"
   }
 }
