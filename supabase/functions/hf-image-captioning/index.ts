@@ -3,7 +3,7 @@
 // This enables autocomplete, go to definition, etc.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { HfInference } from "https://esm.sh/@huggingface/inference@2.2.0";
+import { HfInference } from "https://esm.sh/@huggingface/inference@2.3.2";
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "./types.ts";
 
@@ -38,7 +38,7 @@ serve(async (req) => {
   const { signedUrl } = data;
 
   // Run image captioning with Huggingface
-  const imgDesc: { generated_text: string } = await hf.imageToText({
+  const imgDesc = await hf.imageToText({
     data: await (await fetch(signedUrl)).blob(),
     model: "nlpconnect/vit-gpt2-image-captioning",
   });

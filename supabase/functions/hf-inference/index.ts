@@ -1,4 +1,4 @@
-import { HfInference } from "https://esm.sh/@huggingface/inference@2.2.0";
+import { HfInference } from "https://esm.sh/@huggingface/inference@2.3.2";
 
 console.log("Hello from `hf-inference`!");
 
@@ -15,12 +15,12 @@ router
   })
   .get("/hf-inference/translation", async (context) => {
     console.log("Running `translation` with `t5-base` model.");
-    const res: string = await hf.translation({
+    const res = await hf.translation({
       model: "t5-base",
       inputs: "My name is Wolfgang and I live in Berlin",
     });
 
-    context.response.body = res;
+    context.response.body = res.translation_text;
   })
   .get("/hf-inference/textToSpeech", async (context) => {
     console.log(
@@ -53,12 +53,12 @@ router
     console.log(
       "Running `imageToText` with `nlpconnect/vit-gpt2-image-captioning` model."
     );
-    const imgDesc: string = await hf.imageToText({
+    const imgDesc = await hf.imageToText({
       data: await (await fetch("https://picsum.photos/300/300")).blob(),
       model: "nlpconnect/vit-gpt2-image-captioning",
     });
 
-    context.response.body = imgDesc;
+    context.response.body = imgDesc.generated_text;
   });
 
 const app = new Application();
