@@ -1,12 +1,9 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-import { serve } from "std/server";
-
-console.log(`Function "telegram-bot" up and running!`);
-
-import { Bot, webhookCallback } from "grammy";
+import {
+  Bot,
+  webhookCallback,
+} from "https://deno.land/x/grammy@v1.14.1/mod.ts";
 
 const bot = new Bot(Deno.env.get("BOT_TOKEN") || "");
 
@@ -16,6 +13,8 @@ bot.command("ping", (ctx) => ctx.reply(`Pong! ${new Date()} ${Date.now()}`));
 
 const handleUpdate = webhookCallback(bot, "std/http");
 
+console.log(`Bot is running!`);
+
 serve(async (req) => {
   try {
     const url = new URL(req.url);
@@ -23,8 +22,12 @@ serve(async (req) => {
       return new Response("not allowed", { status: 405 });
     }
 
-    return await handleUpdate(req);
+    const response = await handleUpdate(req);
+    return response;
   } catch (err) {
     console.error(err);
+    return new Response("error", { status: 400 });
   }
 });
+
+console.log(`Function "telegram-bot" up and running!`);
